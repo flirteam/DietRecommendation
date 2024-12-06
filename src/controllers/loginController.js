@@ -17,7 +17,7 @@ const Login = asyncHandler(async (req, res) => {
 
   try {
     const [results] = await dbConnect.query(
-      "SELECT id, email, username FROM users WHERE email = ? AND password = ?",
+      "SELECT id, email, username, birthdate FROM users WHERE email = ? AND password = ?",
       [email, hashedPassword]
     );
 
@@ -35,7 +35,7 @@ const Login = asyncHandler(async (req, res) => {
       return res.status(200).json({
         message: "Login successful.",
         accessToken,
-        user: { id: user.id, email: user.email, username: user.username },
+        user: results[0]
       });
     } else {
       return res.status(401).json({ message: "Invalid email or password." });
@@ -55,7 +55,7 @@ const getUserById = asyncHandler(async (req, res) => {
 
   try {
     const [results] = await dbConnect.query(
-      "SELECT id, email, username FROM users WHERE id = ?",
+      "SELECT id, email, username, birthdate FROM users WHERE id = ?",
       [userId]
     );
 
