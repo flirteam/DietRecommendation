@@ -1,0 +1,80 @@
+{
+    "user_info": {
+        "current_weight": 76,
+        "target_weight": 71,
+        "height": 182,
+        "age": 23,
+        "gender": "Male",
+        "activity_level": 3,
+        "goal_type": "벌크업",
+        "current_tdee": 2866.54,
+        "target_tdee": 2762.71,
+        "carb_target": 414.41,
+        "protein_target": 207.2,
+        "fat_target": 30.7
+    },
+    "recommended_diet": {
+        "breakfast": {
+            "rice": {
+                "food_name": "스파게티_해물_크림소스",
+                "portion": 270.27,
+                "carb": 47.0,
+                "protein": 16.43,
+                "fat": 26.92,
+                "calories": 497.29
+            },
+            "side_dish": {
+                "food_name": "취나물무침",
+                "portion": 200,
+                "carb": 13.22,
+                "protein": 5.5,
+                "fat": 24.62,
+                "calories": 296.0
+            }
+        },
+        "lunch": {
+            "rice": {
+                "food_name": "만두국_사골",
+                "portion": 300,
+                "carb": 26.82,
+                "protein": 11.22,
+                "fat": 12.0,
+                "calories": 261.0
+            },
+            "side_dish": {
+                "food_name": "고추조림_멸치",
+                "portion": 200,
+                "carb": 9.38,
+                "protein": 14.16,
+                "fat": 2.42,
+                "calories": 114.0
+            }
+        },
+        "snack": {
+            "food_name": "아이스크림_찰떡이구마 아이스크림",
+            "portion": 100,
+            "carb": 31.3,
+            "protein": 3.48,
+            "fat": 7.83,
+            "calories": 210.0
+        },
+        "dinner": {
+            "rice": {
+                "food_name": "칼국수_바지락",
+                "portion": 300,
+                "carb": 47.91,
+                "protein": 10.29,
+                "fat": 1.59,
+                "calories": 246.0
+            },
+            "side_dish": {
+                "food_name": "느타리버섯무침",
+                "portion": 200,
+                "carb": 13.5,
+                "protein": 4.32,
+                "fat": 3.04,
+                "calories": 78.0
+            }
+        }
+    }
+}
