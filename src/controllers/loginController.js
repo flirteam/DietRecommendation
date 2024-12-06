@@ -16,30 +16,77 @@ const Login = asyncHandler(async (req, res) => {
   const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
 
   try {
-    const [results] = await dbConnect.query(
+    // 사용자 계정 정보 조회
+    const [userResults] = await dbConnect.query(
       "SELECT id, email, username, birthdate FROM users WHERE email = ? AND password = ?",
       [email, hashedPassword]
     );
 
-    if (results.length > 0) {
-      const user = results[0];
-      const { accessToken, refreshToken } = generateTokens(user);
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
-      });
-
-      return res.status(200).json({
-        message: "Login successful.",
-        accessToken,
-        user: results[0]
-      });
-    } else {
+    if (userResults.length === 0) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
+
+    const user = userResults[0];
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    // 사용자 신체 정보 조회
+    const [physicalInfoResults] = await dbConnect.query(
+      `
+      SELECT 
+        current_weight, 
+        target_weight, 
+        height, 
+        age, 
+        gender, 
+        activity_level, 
+        goal_type, 
+        basal_metabolic_rate AS bmr, 
+        active_metabolic_rate AS amr, 
+        target_basal_metabolic_rate AS target_bmr, 
+        target_active_metabolic_rate AS target_amr, 
+        bmi, 
+        body_fat_percentage AS bfp
+      FROM user_physical_info
+      WHERE user_id = ?
+      `,
+      [user.id]
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+    });
+
+    if (physicalInfoResults.length === 0) {
+      // 신체 정보가 없는 경우
+      return res.status(200).json({
+        message: "Login successful. No physical information found.",
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          birthdate: user.birthdate,
+        },
+        hasPhysicalInfo: false,
+      });
+    }
+
+    // 신체 정보가 있는 경우
+    return res.status(200).json({
+      message: "Login successful.",
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        birthdate: user.birthdate,
+      },
+      physicalInfo: physicalInfoResults[0],
+      hasPhysicalInfo: true,
+    });
   } catch (error) {
     console.error("Database error:", error);
     return res.status(500).json({ message: "Server error." });
