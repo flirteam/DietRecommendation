@@ -6,7 +6,7 @@ const dbConnect = require("../config/dbConnect");
 require("dotenv").config();
 
 // POST Login user handler
-const loginUser = asyncHandler(async (req, res) => {
+const Login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -103,11 +103,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const getUserByToken = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  console.log(userId);
+  //console.log(userId);
  
   try {
     const [results] = await dbConnect.query(
-      "SELECT id, email, username FROM users WHERE id = ?",
+      "SELECT id, email, username, birthdate FROM users WHERE id = ?",
       [userId]
     );
  
@@ -131,5 +131,53 @@ const getUserByToken = asyncHandler(async (req, res) => {
     });
   }
 });
+
+const updateUserByToken = asyncHandler(async (req, res) => {
+  const userId = req.user.id; // 인증된 사용자 ID 가져오기
+  const { email, username, birthdate } = req.body; // 업데이트할 필드
+
+  // 필수 데이터가 제공되지 않았을 경우
+  if (!email && !username && !birthdate) {
+    return res.status(400).json({ message: "At least one field to update is required." });
+  }
+
+  // 업데이트 필드 동적 생성
+  const updates = [];
+  const values = [];
+
+  if (email) {
+    updates.push("email = ?");
+    values.push(email);
+  }
+
+  if (username) {
+    updates.push("username = ?");
+    values.push(username);
+  }
+
+  if (birthdate) {
+    updates.push("birthdate = ?");
+    values.push(birthdate);
+  }
+
+  values.push(userId); // ID는 마지막 값으로 추가
+
+  try {
+    // 업데이트 쿼리 실행
+    const [result] = await dbConnect.query(
+      `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    if (result.affectedRows > 0) {
+      return res.status(200).json({ message: "User updated successfully." });
+    } else {
+      return res.status(404).json({ message: "User not found." });
+    }
+  } catch (error) {
+    console.error("Database error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
  
- module.exports = { loginUser, getUserById, registerUser, getUserByToken };
+ module.exports = { Login, getUserById, registerUser, getUserByToken, updateUserByToken };
