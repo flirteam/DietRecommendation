@@ -1,5 +1,5 @@
 const express = require("express");
-const { Login, getUserById, registerUser, getUserByToken, updateUserByToken } = require("../controllers/loginController");
+const { Login, getUserById, registerUser, getUserByToken, updateUserByToken, changePassword } = require("../controllers/loginController");
 const { authenticateToken } = require("../middlewares/loginMiddleware");
 
 const router = express.Router();
@@ -17,5 +17,7 @@ router.get("/:id", getUserById);
 
 // 회원가입 요청 처리 (미들웨어 없음)
 router.post("/register", registerUser);
+
+router.put("/changePassword", authenticateToken, changePassword);
 
 module.exports = router;

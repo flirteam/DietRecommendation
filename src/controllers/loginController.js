@@ -226,5 +226,58 @@ const updateUserByToken = asyncHandler(async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 });
+
+const changePassword = asyncHandler(async (req, res) => {
+  const userId = req.user.id; // 인증된 사용자 ID 가져오기
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+  // 입력 값 검증
+  if (!currentPassword || !newPassword || !confirmNewPassword) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: "New passwords do not match." });
+  }
+
+  const hashedCurrentPassword = crypto.createHash("sha256").update(currentPassword).digest("hex");
+
+  try {
+    // 현재 비밀번호 검증
+    const [userResults] = await dbConnect.query(
+      "SELECT password FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const user = userResults[0];
+
+    if (user.password !== hashedCurrentPassword) {
+      return res.status(401).json({ message: "Current password is incorrect." });
+    }
+
+    // 새로운 비밀번호 해싱
+    const hashedNewPassword = crypto.createHash("sha256").update(newPassword).digest("hex");
+
+    // 비밀번호 업데이트
+    const [updateResult] = await dbConnect.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedNewPassword, userId]
+    );
+
+    if (updateResult.affectedRows > 0) {
+      return res.status(200).json({ message: "Password updated successfully." });
+    } else {
+      return res.status(500).json({ message: "Password update failed." });
+    }
+  } catch (error) {
+    console.error("Database error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+
  
- module.exports = { Login, getUserById, registerUser, getUserByToken, updateUserByToken };
+ module.exports = { Login, getUserById, registerUser, getUserByToken, updateUserByToken, changePassword };
