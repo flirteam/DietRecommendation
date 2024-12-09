@@ -279,5 +279,4 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 });
 
- 
  module.exports = { Login, getUserById, registerUser, getUserByToken, updateUserByToken, changePassword };

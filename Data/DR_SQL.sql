@@ -83,13 +83,11 @@ DROP TABLE IF EXISTS diet_records;
 DROP TABLE IF EXISTS diet_recommendations;
 DROP TABLE IF EXISTS user_physical_info;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS foods;
 
 SET FOREIGN_KEY_CHECKS = 1; -- 외래 키 제약 조건 다시 활성화
 
-
-
 -- 아래 부터는 테스트용으로 사용한 코드들
-
 
 select * from foods;
 select * from users;

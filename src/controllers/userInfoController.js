@@ -1,13 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const dbConnect = require("../config/dbConnect");
-
-// 활동 수준 계수
-const ACTIVITY_LEVEL_FACTORS = {
-  1: 1.2,   // 거의 활동 없음
-  2: 1.375, // 가벼운 활동
-  3: 1.55,  // 보통 활동
-  4: 1.725  // 매우 활동적
-};
+const { calculateBMR, calculateAMR, calculateBMI, calculateBFP } = require("../utils/healthUtils");
 
 // @desc Get user info
 // @route GET /info
@@ -50,6 +43,42 @@ const getUserInfo = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc Get user info by user ID
+// @utility function
+// 유틸리티 함수이기 때문에 클라이언트에서는 사용하지 않음.
+const getUserInfoById = asyncHandler(async (userId) => {
+  const [results] = await dbConnect.query(
+      `
+      SELECT 
+          u.username, 
+          upi.current_weight, 
+          upi.target_weight, 
+          upi.height, 
+          upi.age, 
+          upi.gender, 
+          upi.activity_level, 
+          upi.goal_type,
+          upi.basal_metabolic_rate AS bmr,
+          upi.active_metabolic_rate AS amr,
+          upi.target_basal_metabolic_rate AS target_bmr,
+          upi.target_active_metabolic_rate AS target_amr,
+          upi.bmi,
+          upi.body_fat_percentage AS bfp
+      FROM user_physical_info upi
+      INNER JOIN users u ON upi.user_id = u.id
+      WHERE upi.user_id = ?
+      `,
+      [userId]
+  );
+
+  if (results.length === 0) {
+      throw new Error("User information not found");
+  }
+
+  return results[0]; // 데이터를 반환
+});
+
+
 // @desc Add user info
 // @route POST /info
 const addUserInfo = asyncHandler(async (req, res) => {
@@ -68,32 +97,13 @@ const addUserInfo = asyncHandler(async (req, res) => {
       });
     }
 
-    // BMR, AMR, BMI, BFP 계산
     const bmr = calculateBMR(current_weight, height, age, gender);
     const amr = calculateAMR(bmr, activity_level);
     const bmi = calculateBMI(current_weight, height);
     const bfp = calculateBFP(bmi, age, gender);
 
-    // 목표 BMR, AMR 계산
     const targetBmr = calculateBMR(target_weight, height, age, gender);
     const targetAmr = calculateAMR(targetBmr, activity_level);
-
-    console.log("SQL Query:", {
-      userId, 
-      current_weight, 
-      target_weight, 
-      height, 
-      age, 
-      gender, 
-      activity_level, 
-      goal_type, 
-      bmr, 
-      amr, 
-      targetBmr, 
-      targetAmr, 
-      bmi, 
-      bfp
-    });
 
     await dbConnect.query(
       `
@@ -131,13 +141,11 @@ const updateUserInfo = asyncHandler(async (req, res) => {
       });
     }
 
-    // BMR, AMR, BMI, BFP 계산
     const bmr = calculateBMR(current_weight, height, age, gender);
     const amr = calculateAMR(bmr, activity_level);
     const bmi = calculateBMI(current_weight, height);
     const bfp = calculateBFP(bmi, age, gender);
 
-    // 목표 BMR, AMR 계산
     const targetBmr = calculateBMR(target_weight, height, age, gender);
     const targetAmr = calculateAMR(targetBmr, activity_level);
 
@@ -161,29 +169,4 @@ const updateUserInfo = asyncHandler(async (req, res) => {
   }
 });
 
-// Helper functions
-const calculateBMR = (weight, height, age, gender) => {
-  if (gender === "Male") {
-    return 10 * weight + 6.25 * height - 5 * age + 5;
-  } else {
-    return 10 * weight + 6.25 * height - 5 * age - 161;
-  }
-};
-
-const calculateAMR = (bmr, activityLevel) => {
-  return bmr * ACTIVITY_LEVEL_FACTORS[activityLevel];
-};
-
-const calculateBMI = (weight, height) => {
-  return weight / ((height / 100) ** 2);
-};
-
-const calculateBFP = (bmi, age, gender) => {
-  if (gender === "Male") {
-    return (1.20 * bmi) + (0.23 * age) - 16.2;
-  } else {
-    return (1.20 * bmi) + (0.23 * age) - 5.4;
-  }
-};
-
-module.exports = { addUserInfo, getUserInfo, updateUserInfo };
+module.exports = { getUserInfo, getUserInfoById, addUserInfo, updateUserInfo };

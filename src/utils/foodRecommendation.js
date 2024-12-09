@@ -52,7 +52,7 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
 
         if (meal === "snack") {
             // 간식은 디저트류나 브런치류에서 선택
-            const snackFood = foodData.filter(item => ['디저트류', '브런치류'].includes(classifyFood(item))); // classifyFood 적용
+            const snackFood = foodData.filter(item => ['디저트', '브런치'].includes(classifyFood(item))); // classifyFood 적용
             if (snackFood.length > 0) {
                 snackFood.forEach(item => {
                     item.score = Math.abs(item.carbs - mealCarbTarget) + 
@@ -79,8 +79,8 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
             }
         } else {
             // 일반 식사는 밥류와 반찬류 조합
-            const riceFood = foodData.filter(item => classifyFood(item) === '밥류' && !usedFoods.includes(item.name)); // classifyFood 적용
-            const sideDish = foodData.filter(item => classifyFood(item) === '반찬류' && !usedFoods.includes(item.name)); // classifyFood 적용
+            const riceFood = foodData.filter(item => classifyFood(item) === '밥' && !usedFoods.includes(item.name)); // classifyFood 적용
+            const sideDish = foodData.filter(item => classifyFood(item) === '반찬' && !usedFoods.includes(item.name)); // classifyFood 적용
 
             if (riceFood.length > 0 && sideDish.length > 0) {
                 // 밥류 선택
