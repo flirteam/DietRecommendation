@@ -94,7 +94,9 @@ select * from users;
 select * from user_physical_info;
 
 delete from users where birthdate is null;
-delete from user_physical_info where id > 1;
+delete from user_physical_info where id = 1;
+
+delete from users where id >= 1;
 ALTER TABLE user_physical_info AUTO_INCREMENT = 1;
 
 ALTER TABLE Users CHANGE name username VARCHAR(100) NOT NULL;
