@@ -12,8 +12,11 @@ exports.authenticateToken = (req, res, next) => {
   }
 
   try {
+    // Base64로 디코딩된 Secret Key 사용
+    const secretKey = Buffer.from(process.env.JWT_SECRET, "base64");
+
     // JWT 토큰 검증 및 디코딩
-    const user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS384"] }); // Access Token을 검증
+    const user = jwt.verify(token, secretKey, { algorithms: ["HS384"] });
 
     // 복호화된 결과 출력 (콘솔)
     console.log("Decoded JWT payload:", user);

@@ -5,10 +5,9 @@ const { generateTokens } = require("../utils/tokenUtils");
 const dbConnect = require("../config/dbConnect");
 require("dotenv").config();
 
-
 // 비밀번호 해싱
 const hashPassword = async (password) => {
-  const saltRounds = 10; // Spring Boot와 동일하게 설정
+  const saltRounds = 10;
   return await bcrypt.hash(password, saltRounds);
 };
 
@@ -39,8 +38,54 @@ const Login = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
+    // 사용자 신체 정보 조회
+    const [physicalInfoResults] = await dbConnect.query(
+      `
+      SELECT 
+        current_weight, 
+        target_weight, 
+        height, 
+        age, 
+        gender, 
+        activity_level, 
+        goal_type, 
+        basal_metabolic_rate AS bmr, 
+        active_metabolic_rate AS amr, 
+        target_basal_metabolic_rate AS target_bmr, 
+        target_active_metabolic_rate AS target_amr, 
+        bmi, 
+        body_fat_percentage AS bfp
+      FROM user_physical_info
+      WHERE user_id = ?
+      `,
+      [user.id]
+    );
+
     const { accessToken, refreshToken } = generateTokens(user);
 
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+    });
+
+    if (physicalInfoResults.length === 0) {
+      // 신체 정보가 없는 경우
+      return res.status(200).json({
+        message: "Login successful. No physical information found.",
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          birthdate: user.birthdate,
+        },
+        hasPhysicalInfo: false,
+      });
+    }
+
+    // 신체 정보가 있는 경우
     return res.status(200).json({
       message: "Login successful.",
       accessToken,
@@ -50,6 +95,8 @@ const Login = asyncHandler(async (req, res) => {
         username: user.username,
         birthdate: user.birthdate,
       },
+      physicalInfo: physicalInfoResults[0],
+      hasPhysicalInfo: true,
     });
   } catch (error) {
     console.error("Database error:", error);
@@ -70,7 +117,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   try {
-    const hashedPassword = await hashPassword(password); // 비밀번호 해싱
+    const hashedPassword = await hashPassword(password);
 
     await dbConnect.query(
       "INSERT INTO users (email, password, username, birthdate) VALUES (?, ?, ?, ?)",
@@ -114,6 +161,7 @@ const getUserById = asyncHandler(async (req, res) => {
 // GET: User by Token
 const getUserByToken = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+  console.log(userId);
 
   try {
     const [results] = await dbConnect.query(
@@ -187,6 +235,8 @@ const changePassword = asyncHandler(async (req, res) => {
   if (newPassword !== confirmNewPassword) {
     return res.status(400).json({ message: "New passwords do not match." });
   }
+
+  const hashedCurrentPassword = await hashPassword(currentPassword);
 
   try {
     const [userResults] = await dbConnect.query(
