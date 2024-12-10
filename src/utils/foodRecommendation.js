@@ -36,12 +36,12 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
     const mealRatios = {
         "breakfast": 0.3,
         "lunch": 0.35,
-        "snack": 0.15,
+        "snack": 0.15, // 간식 비율
         "dinner": 0.2
     };
     
     let recommendedMeals = {};
-    let usedFoods = [];  // 이미 선택된 음식을 저장하는 리스트
+    let usedFoods = []; // 이미 선택된 음식을 저장하는 리스트
     
     for (const meal in mealRatios) {
         const ratio = mealRatios[meal];
@@ -51,18 +51,19 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
         const mealFatTarget = fatTarget * ratio;
 
         if (meal === "snack") {
-            // 간식은 디저트류나 브런치류에서 선택
-            const snackFood = foodData.filter(item => ['디저트', '브런치'].includes(classifyFood(item))); // classifyFood 적용
-            if (snackFood.length > 0) {
-                snackFood.forEach(item => {
-                    item.score = Math.abs(item.carbs - mealCarbTarget) + 
-                                 Math.abs(item.protein - mealProteinTarget) + 
+            // 간식은 디저트류에서만 선택
+            const dessertFood = foodData.filter(item => classifyFood(item) === '디저트류' && !usedFoods.includes(item.name));
+            
+            if (dessertFood.length > 0) {
+                dessertFood.forEach(item => {
+                    item.score = Math.abs(item.carbs - mealCarbTarget) +
+                                 Math.abs(item.protein - mealProteinTarget) +
                                  Math.abs(item.fat - mealFatTarget);
                 });
 
                 // 상위 5개 음식 중 랜덤 선택
-                snackFood.sort((a, b) => a.score - b.score);
-                const selectedFood = snackFood.slice(0, 5)[Math.floor(Math.random() * 5)];
+                dessertFood.sort((a, b) => a.score - b.score);
+                const selectedFood = dessertFood.slice(0, 5)[Math.floor(Math.random() * 5)];
                 const portion = (mealCalories / selectedFood.calories) * 100;
 
                 recommendedMeals[meal] = {
@@ -75,30 +76,41 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
                 };
                 usedFoods.push(selectedFood.name);
             } else {
-                recommendedMeals[meal] = {"message": "No suitable snack found"};
+                recommendedMeals[meal] = { "message": "No suitable snack found" };
             }
         } else {
-            // 일반 식사는 밥류와 반찬류 조합
-            const riceFood = foodData.filter(item => classifyFood(item) === '밥' && !usedFoods.includes(item.name)); // classifyFood 적용
-            const sideDish = foodData.filter(item => classifyFood(item) === '반찬' && !usedFoods.includes(item.name)); // classifyFood 적용
+            // 다른 식사 (밥류 + 요리류 + 반찬류)
+            const riceFood = foodData.filter(item => classifyFood(item) === '밥류' && !usedFoods.includes(item.name));
+            const mainDish = foodData.filter(item => classifyFood(item) === '요리류' && !usedFoods.includes(item.name));
+            const sideDish = foodData.filter(item => classifyFood(item) === '반찬류' && !usedFoods.includes(item.name));
 
-            if (riceFood.length > 0 && sideDish.length > 0) {
-                // 밥류 선택
+            if (riceFood.length > 0 && mainDish.length > 0 && sideDish.length > 0) {
+                // 밥류 선택 (50%)
                 riceFood.forEach(item => {
-                    item.score = Math.abs(item.carbs - (mealCarbTarget * 0.6)) + 
-                                 Math.abs(item.protein - (mealProteinTarget * 0.4));
+                    item.score = Math.abs(item.carbs - (mealCarbTarget * 0.5)) + 
+                                 Math.abs(item.protein - (mealProteinTarget * 0.5));
                 });
                 const rice = riceFood.sort((a, b) => a.score - b.score).slice(0, 5)[Math.floor(Math.random() * 5)];
 
-                // 반찬류 선택
-                sideDish.forEach(item => {
-                    item.score = Math.abs(item.protein - (mealProteinTarget * 0.6)) + 
+                // 요리류 선택 (40%)
+                mainDish.forEach(item => {
+                    item.score = Math.abs(item.protein - (mealProteinTarget * 0.4)) + 
                                  Math.abs(item.fat - (mealFatTarget * 0.4));
+                });
+                const main = mainDish.sort((a, b) => a.score - b.score).slice(0, 5)[Math.floor(Math.random() * 5)];
+
+                // 반찬류 선택 (10%)
+                sideDish.forEach(item => {
+                    item.score = Math.abs(item.carbs - (mealCarbTarget * 0.1)) + 
+                                 Math.abs(item.protein - (mealProteinTarget * 0.1)) +
+                                 Math.abs(item.fat - (mealFatTarget * 0.1));
                 });
                 const side = sideDish.sort((a, b) => a.score - b.score).slice(0, 5)[Math.floor(Math.random() * 5)];
 
-                const ricePortion = (mealCalories * 0.6 / rice.calories) * 100;
-                const sidePortion = (mealCalories * 0.4 / side.calories) * 100;
+                // 음식별 비율 계산
+                const ricePortion = (mealCalories * 0.5 / rice.calories) * 100;
+                const mainPortion = (mealCalories * 0.4 / main.calories) * 100;
+                const sidePortion = (mealCalories * 0.1 / side.calories) * 100;
 
                 recommendedMeals[meal] = {
                     "rice": {
@@ -108,6 +120,14 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
                         "protein": Math.round(rice.protein * (ricePortion / 100) * 100) / 100,
                         "fat": Math.round(rice.fat * (ricePortion / 100) * 100) / 100,
                         "calories": Math.round(rice.calories * (ricePortion / 100) * 100) / 100
+                    },
+                    "main_dish": {
+                        "food_name": main.name,
+                        "portion": Math.round(mainPortion * 100) / 100,
+                        "carb": Math.round(main.carbs * (mainPortion / 100) * 100) / 100,
+                        "protein": Math.round(main.protein * (mainPortion / 100) * 100) / 100,
+                        "fat": Math.round(main.fat * (mainPortion / 100) * 100) / 100,
+                        "calories": Math.round(main.calories * (mainPortion / 100) * 100) / 100
                     },
                     "side_dish": {
                         "food_name": side.name,
@@ -119,15 +139,17 @@ const recommendDiet = (calorieTarget, foodData, carbTarget, proteinTarget, fatTa
                     }
                 };
                 usedFoods.push(rice.name);
+                usedFoods.push(main.name);
                 usedFoods.push(side.name);
             } else {
-                recommendedMeals[meal] = {"message": `No suitable food found for ${meal}`};
+                recommendedMeals[meal] = { "message": `No suitable food found for ${meal}` };
             }
         }
     }
 
     return recommendedMeals;
 };
+
 
 // BMI 수치에 따른 AMR 조정
 function adjustAMRBasedOnBMI(amr, bmi) {
