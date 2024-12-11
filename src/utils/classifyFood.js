@@ -19,6 +19,8 @@ function classifyFood(food) {
             return "디저트류";
         case "브런치":
             return "브런치류";
+        case "음료":
+            return "음료류";
         default:
             return "기타";
     }

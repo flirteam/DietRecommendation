@@ -50,34 +50,37 @@ CREATE TABLE foods (
 );
 
 -- 식단 추천 기록 테이블
--- CREATE TABLE diet_recommendations (
---     id INT PRIMARY KEY AUTO_INCREMENT,
---     user_id INT NOT NULL,
---     daily_calories INT NOT NULL,
---     carbs_ratio DECIMAL(4,2) NOT NULL,  -- 탄수화물 비율
---     protein_ratio DECIMAL(4,2) NOT NULL,  -- 단백질 비율
---     fat_ratio DECIMAL(4,2) NOT NULL,      -- 지방 비율
---     recommendation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (user_id) REFERENCES users(id)
--- );
+CREATE TABLE diet_recommendations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    daily_calories INT NOT NULL,
+    carbs_ratio DECIMAL(4,2) NOT NULL,  -- 탄수화물 비율
+    protein_ratio DECIMAL(4,2) NOT NULL,  -- 단백질 비율
+    fat_ratio DECIMAL(4,2) NOT NULL,      -- 지방 비율
+    recommendation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
 -- 사용자 식단 기록 테이블 (미사용)
--- CREATE TABLE diet_records (
---     id INT PRIMARY KEY AUTO_INCREMENT,
---     user_id INT NOT NULL,
---     food_id INT NOT NULL,
---     meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
---     servings DECIMAL(3,1) NOT NULL,
---     meal_date DATE NOT NULL,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (user_id) REFERENCES users(id),
---     FOREIGN KEY (food_id) REFERENCES foods(id)
--- );
+CREATE TABLE diet_records (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    food_id INT NOT NULL,
+    meal_type ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
+    servings DECIMAL(3,1) NOT NULL,
+    meal_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (food_id) REFERENCES foods(id)
+);
 
 
 -- 테이블 전체 삭제
 SET FOREIGN_KEY_CHECKS = 0; -- 외래 키 제약 조건 비활성화
 
+DROP TABLE IF EXISTS diet_records;
+
+DROP TABLE IF EXISTS diet_recommendations;
 DROP TABLE IF EXISTS user_physical_info;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS foods;

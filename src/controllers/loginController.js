@@ -224,6 +224,48 @@ const updateUserByToken = asyncHandler(async (req, res) => {
   }
 });
 
+// 비밀번호 초기화
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, username } = req.body;
+
+  if (!email || !username) {
+    return res.status(400).json({ message: "Email and username is required." });
+  }
+
+  try {
+    // 사용자 계정 조회
+    const [userResults] = await dbConnect.query(
+      "SELECT id FROM users WHERE email = ? AND username = ?",
+      [email, username]
+    );
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const userId = userResults[0].id;
+
+    // 초기화 비밀번호 해싱
+    const newPassword = "12345";
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 비밀번호 업데이트
+    const [updateResult] = await dbConnect.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedPassword, userId]
+    );
+
+    if (updateResult.affectedRows > 0) {
+      return res.status(200).json({ message: "Password reset successfully. Your new password is '12345'." });
+    } else {
+      return res.status(500).json({ message: "Password reset failed." });
+    }
+  } catch (error) {
+    console.error("Database error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+
 const changePassword = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { currentPassword, newPassword, confirmNewPassword } = req.body;
@@ -273,4 +315,4 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { Login, registerUser, getUserById, getUserByToken, updateUserByToken, changePassword };
+module.exports = { Login, registerUser, getUserById, getUserByToken, updateUserByToken, resetPassword, changePassword };

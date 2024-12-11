@@ -4,7 +4,8 @@ const {
   getUserById, 
   registerUser, 
   getUserByToken, 
-  updateUserByToken, 
+  updateUserByToken,
+  resetPassword, 
   changePassword,  
 } = require("../controllers/loginController");
 const { authenticateToken } = require("../middlewares/loginMiddleware");
@@ -25,6 +26,9 @@ router.get("/:id", getUserById);
 
 // 회원가입 요청 처리
 router.post("/register", registerUser);
+
+// 비밀번호 초기화 라우트
+router.post("/resetPassword", resetPassword);
 
 // 비밀번호 변경
 router.put("/changePassword", authenticateToken, changePassword);
