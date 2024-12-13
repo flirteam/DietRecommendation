@@ -1,34 +1,44 @@
 const { spawn } = require("child_process");
 
-// @desc Call Python script to predict days to goal
-const predictDaysToGoal = (userInfo) => {
-    return new Promise((resolve, reject) => {
-        // Python 스크립트 경로 수정
-        const python = spawn("python", ["src/python/model.py", JSON.stringify(userInfo)]);
+const runPythonScript = (userInfo) => {
+    console.log("Sending data to Python script:", JSON.stringify(userInfo)); // 전달 데이터 로그
 
-        let result = "";
+    return new Promise((resolve, reject) => {
+        const pythonProcess = spawn("python", ["./src/python/model_predict.py"]);
+
+        let data = "";
         let error = "";
 
-        python.stdout.on("data", (data) => {
-            result += data.toString();
+        // Node.js에서 Python으로 데이터 전달
+        pythonProcess.stdin.write(JSON.stringify(userInfo));
+        pythonProcess.stdin.end();
+
+        // Python 표준 출력
+        pythonProcess.stdout.on("data", (chunk) => {
+            data += chunk.toString();
         });
 
-        python.stderr.on("data", (data) => {
-            error += data.toString();
+        // Python 표준 에러
+        pythonProcess.stderr.on("data", (chunk) => {
+            error += chunk.toString();
         });
 
-        python.on("close", (code) => {
-            if (code !== 0 || error) {
-                return reject(`Python Error: ${error}`);
-            }
-            try {
-                const parsedResult = JSON.parse(result);
-                resolve(parsedResult);
-            } catch (e) {
-                reject(`Parsing Error: ${e.message}`);
+        // Python 종료 시 처리
+        pythonProcess.on("close", (code) => {
+            if (code === 0) {
+                try {
+                    const result = JSON.parse(data);
+                    console.log("Received output from Python script:", result); // 결과 로그
+                    resolve(result);
+                } catch (err) {
+                    reject(new Error("Failed to parse Python output: " + err.message));
+                }
+            } else {
+                console.error("Python script error output:", error); // 에러 로그
+                reject(new Error(`Python script exited with code ${code}: ${error}`));
             }
         });
     });
 };
 
-module.exports = { predictDaysToGoal };
+module.exports = { runPythonScript };

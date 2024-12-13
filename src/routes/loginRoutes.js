@@ -15,7 +15,7 @@ const router = express.Router();
 // 로그인 요청 처리, 사용자 정보 반환
 router.post("/", Login);
 
-// 로그인 유저 정보 조회 처리
+// 로그인 유저 정보 조회 처리, 디버깅용
 router.get("/getLoginUser", authenticateToken, getUserByToken);
 
 // 로그인 유저 정보 업데이트
