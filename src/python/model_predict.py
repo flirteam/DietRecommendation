@@ -97,12 +97,12 @@ if __name__ == "__main__":
             "days_to_goal": round(days_to_goal, 2),
             "message": f"{user_info['username']}님의 목표 달성까지 예상 소요 기간은 약 {round(days_to_goal, 2)}일입니다."
         }
-        print(json.dumps(result))
+        print(json.dumps(result, ensure_ascii=False))  # ensure_ascii=False 추가
 
     except Exception as e:
         # 에러 메시지 출력
         print(json.dumps({
             "error": str(e),
             "traceback": traceback.format_exc()
-        }), file=sys.stderr)
+        }, ensure_ascii=False), file=sys.stderr)
         sys.exit(1)
