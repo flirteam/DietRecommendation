@@ -8,6 +8,8 @@ import torch.nn as nn
 from joblib import load
 import traceback
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 # routes setting app.js
 # feature_path = "./src/python/Data/feature_columns.json"
 # scaler_path = "./src/python/Data/scaler.joblib"
@@ -109,3 +111,4 @@ if __name__ == "__main__":
             "traceback": traceback.format_exc()
         }, ensure_ascii=False), file=sys.stderr)
         sys.exit(1)
+

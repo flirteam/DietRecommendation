@@ -4,7 +4,7 @@ const runPythonScript = (userInfo) => {
     console.log("Sending data to Python script:", JSON.stringify(userInfo)); // 전달 데이터 로그
 
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn("python", ["./src/python/model_predict.py"]);
+        const pythonProcess = spawn("python3", ["./src/python/model_predict.py"]); // python3 사용 확인
 
         let data = "";
         let error = "";
@@ -14,13 +14,15 @@ const runPythonScript = (userInfo) => {
         pythonProcess.stdin.end();
 
         // Python 표준 출력
+        pythonProcess.stdout.setEncoding("utf-8"); // 명시적으로 UTF-8 인코딩 설정
         pythonProcess.stdout.on("data", (chunk) => {
-            data += chunk.toString();
+            data += chunk;
         });
 
         // Python 표준 에러
+        pythonProcess.stderr.setEncoding("utf-8"); // 명시적으로 UTF-8 인코딩 설정
         pythonProcess.stderr.on("data", (chunk) => {
-            error += chunk.toString();
+            error += chunk;
         });
 
         // Python 종료 시 처리

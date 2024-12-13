@@ -1,0 +1,16 @@
+{
+    "username": "NewUser",
+    "age": 24,
+    "height": 182,
+    "current_weight": 85,
+    "target_weight": 75,
+    "bmr": 1500.0,
+    "tdee": 2000.0,
+    "bmi": 22.9,
+    "target_bmi": 24.5,
+    "activity_level": 3,
+    "gender": "Male",
+    "goal_type": "벌크업",
+    "preferred_body_part": "가슴"
+  }
+  
