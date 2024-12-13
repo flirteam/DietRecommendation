@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import json
 import pandas as pd
@@ -7,19 +8,24 @@ import torch.nn as nn
 from joblib import load
 import traceback
 
-# 경로 설정
-feature_path = "./src/python/Data/feature_columns.json"
-scaler_path = "./src/python/Data/scaler.joblib"
-model_path = "./src/python/Data/P_model.pth"
+# routes setting app.js
+# feature_path = "./src/python/Data/feature_columns.json"
+# scaler_path = "./src/python/Data/scaler.joblib"
+# model_path = "./src/python/Data/P_model.pth"
 
-# Feature 파일 로드
+# routes setting py
+feature_path = "./Data/feature_columns.json"
+scaler_path = "./Data/scaler.joblib"
+model_path = "./Data/P_model.pth"
+
+# Feature load
 with open(feature_path, 'r') as f:
     expected_columns = json.load(f)
 
-# Scaler 로드
+# Scaler load
 scaler = load(scaler_path)
 
-# PyTorch 모델 정의
+# PyTorch model
 class FeedforwardNNImproved(nn.Module):
     def __init__(self, input_dim, hidden_layer_sizes):
         super(FeedforwardNNImproved, self).__init__()
@@ -31,13 +37,13 @@ class FeedforwardNNImproved(nn.Module):
             layers.append(nn.LeakyReLU())
             layers.append(nn.Dropout(0.2))
             in_dim = size
-        layers.append(nn.Linear(in_dim, 1))  # 마지막 출력 레이어
+        layers.append(nn.Linear(in_dim, 1)) 
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.layers(x)
 
-# 모델 초기화 및 로드
+# model set
 hidden_layer_sizes = [128, 64, 32]
 input_dim = len(expected_columns)
 model = FeedforwardNNImproved(input_dim, hidden_layer_sizes)
@@ -45,7 +51,6 @@ model.load_state_dict(torch.load(model_path))
 model.eval()
 
 def predict(user_info):
-    # 입력 데이터 처리
     input_data = pd.DataFrame([{
         "Age": user_info["age"],
         "Height": user_info["height"] / 100,  # cm → m
@@ -55,7 +60,7 @@ def predict(user_info):
         "TDEE": user_info["tdee"],
         "BMI": user_info["bmi"],
         "TargetBMI": user_info["target_bmi"],
-        "Calorie_Target": user_info["tdee"] - 500,  # 예시 칼로리 목표
+        "Calorie_Target": user_info["tdee"] - 500, 
         "Calorie_Deficit": 500,
         "총 운동시간": 120,
         "하루소모칼로리": 400,
@@ -66,41 +71,39 @@ def predict(user_info):
         "preferred_body_part": user_info["preferred_body_part"]
     }])
 
-    # 범주형 변수 처리
     categorical_features = ['Gender', 'GoalType', 'preferred_body_part']
     input_data = pd.get_dummies(input_data, columns=categorical_features)
     input_data = input_data.reindex(columns=expected_columns, fill_value=0)
 
-    # 데이터 스케일링
+    # Data scaling
     X_input = scaler.transform(input_data)
 
-    # 모델 예측
+    # Model predict
     with torch.no_grad():
         X_tensor = torch.tensor(X_input, dtype=torch.float32)
         prediction = model(X_tensor).item()
-        days_to_goal = np.expm1(prediction)  # 로그 변환 복원
+        days_to_goal = np.expm1(prediction)
 
     return days_to_goal
 
 if __name__ == "__main__":
     try:
-        # stdin에서 입력 데이터 읽기
+        # stdin
         input_data = sys.stdin.read()
         user_info = json.loads(input_data)
 
-        # 예측 수행
+        # Prediction
         days_to_goal = predict(user_info)
 
-        # 결과 출력
         result = {
             "username": user_info["username"],
             "days_to_goal": round(days_to_goal, 2),
-            "message": f"{user_info['username']}님의 목표 달성까지 예상 소요 기간은 약 {round(days_to_goal, 2)}일입니다."
+            "message": f"The estimated time for {user_info['username']} to achieve the goal is approximately {round(days_to_goal, 2)} days."
         }
-        print(json.dumps(result, ensure_ascii=False))  # ensure_ascii=False 추가
+
+        print(json.dumps(result, ensure_ascii=False))  # ensure_ascii=False
 
     except Exception as e:
-        # 에러 메시지 출력
         print(json.dumps({
             "error": str(e),
             "traceback": traceback.format_exc()
